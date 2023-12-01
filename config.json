@@ -1,0 +1,23 @@
+{
+    "block_size": 64,
+    "caches": [
+        {
+            "name": "L1",
+            "sets": 128,
+            "ways": 8,
+            "repl": "lrudb"
+        },
+        {
+            "name": "L2",
+            "sets": 1024,
+            "ways": 8,
+            "repl": "lrudb"
+        },
+        {
+            "name": "LL",
+            "sets": 2048,
+            "ways": 16,
+            "repl": "lrudb"
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+[package]
+name = "cache_rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+xz2 = "0.1.7"
+pico-args = { version = "0.5.0", features = ["short-space-opt", "combined-flags"] }
+crossbeam = "0.8.2"
+fastrand = "2.0.1"
+serde_json = "1.0.0"
+serde = { version = "1.0", features = ["derive"] }
+
+[profile.release]
+debug = true
