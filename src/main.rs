@@ -32,7 +32,6 @@ fn main() {
     let mut cpu = Cpu::new();
 
     let stats_path: String = args.opt_value_from_str("--json").unwrap().expect("Must provide output path with --json");
-    let stats_file = fs::File::create(stats_path).expect("Cannot open output file");
     let mut next_heartbeat = heartbeat_int;
 
     let trace_path: String = args.opt_value_from_str("-t").unwrap().expect("Must provide a trace with -t");
@@ -71,6 +70,8 @@ fn main() {
         .iter()
         .map(|c| c.make_stats(&cpu))
         .collect::<Vec<_>>();
+
+    let stats_file = fs::File::create(stats_path).expect("Cannot open output file");
     serde_json::to_writer_pretty(stats_file, &stats).unwrap();
 }
 

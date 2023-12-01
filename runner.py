@@ -10,7 +10,7 @@ from multiprocessing import cpu_count, pool
 
 WARM_INSTR = 100000000
 SIM_INSTR =  250000000
-N_JOBS = 4
+N_JOBS = 6
 
 TRACE_URL_ROOT = 'https://dpc3.compas.cs.stonybrook.edu/champsim-traces/speccpu/'
 
@@ -84,7 +84,7 @@ class Job:
         args = ['cargo', 'run', '--release', '--', '-w', str(WARM_INSTR), '-i', str(SIM_INSTR), '--json', self.result_path(), '-t', self.trace[1], '--config', json.dumps(self.config)]
         tqdm.write(' '.join(args))
         with open(self.extra_dir() + '/stdout.txt', 'wt') as stdout:
-            subprocess.run(args, stdout=stdout)
+            subprocess.run(args, stdout=stdout, stderr=stdout)
         tqdm.write(f'Finished Job {self.total_id()}')
         self.ran = True
 
@@ -93,9 +93,7 @@ class Job:
             if not self.ran:
                 self.run()
             with open(self.result_path(), 'rt') as file:
-                jobj = json.load(file)
-                assert len(jobj) == 1
-                self.result = jobj[0]
+                self.result = json.load(file)
         return self.result
 
 def run_jobs(jobs):
