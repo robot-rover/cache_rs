@@ -39,6 +39,7 @@ pub struct CacheStats {
     reuse: f64,
     lifetime: f64,
     efficiency: f64,
+    efficiency_im: Vec<f64>,
 }
 
 #[derive(Debug)]
@@ -158,6 +159,15 @@ impl<S: MakeS, B: Default, R: Replace<S, B>> IsCache for Cache<S, B, R> {
         let lifetime = total_both / total_alloc;
         let efficiency = total_live / total_both;
 
+        let efficiency_im = self.blocks.iter().map(|b| {
+            let total = b.live_dur + b.dead_dur;
+            if total == 0 {
+                0f64
+            } else {
+                b.live_dur as f64 / total as f64
+            }
+        }).collect();
+
         CacheStats {
             name: self.name.clone(),
             miss_rate,
@@ -165,6 +175,7 @@ impl<S: MakeS, B: Default, R: Replace<S, B>> IsCache for Cache<S, B, R> {
             reuse,
             lifetime,
             efficiency,
+            efficiency_im,
             misses: self.misses,
             hits: self.hits,
         }
