@@ -5,7 +5,7 @@ use crate::{
     cpu::Cpu,
 };
 
-use super::{AccessResult, Replace, MakeS};
+use super::{AccessResult, MakeS, Replace};
 
 pub struct Lru {}
 
@@ -29,7 +29,15 @@ impl Replace<LruSetData, ()> for Lru {
             .find(|(_way, b)| b.valid && b.tag == addr.tag);
 
         if let Some((hit_way, block)) = hit {
-            lru_queue.remove(lru_queue.iter().cloned().enumerate().find(|(_idx, way)| *way as usize == hit_way).unwrap().0);
+            lru_queue.remove(
+                lru_queue
+                    .iter()
+                    .cloned()
+                    .enumerate()
+                    .find(|(_idx, way)| *way as usize == hit_way)
+                    .unwrap()
+                    .0,
+            );
             lru_queue.push_front(hit_way as u16);
             block.read(cpu);
             AccessResult::Hit
@@ -66,6 +74,8 @@ pub struct LruSetData {
 
 impl MakeS for LruSetData {
     fn new(n_ways: usize) -> Self {
-        LruSetData { ru_order: VecDeque::with_capacity(n_ways) }
+        LruSetData {
+            ru_order: VecDeque::with_capacity(n_ways),
+        }
     }
 }

@@ -17,26 +17,51 @@ use crate::config::Config;
 
 fn main() {
     let mut args = pico_args::Arguments::from_env();
-    let n_warm: u64 = args.opt_value_from_str("-w").expect("-w should be an integer").unwrap_or(50_000_000);
-    let n_instr: u64 = args.opt_value_from_str("-i").expect("-i should be an integer").unwrap_or(100_000_000);
-    let heartbeat_int: u64 = args.opt_value_from_str("-h").expect("-h should be an integer").unwrap_or(0);
+    let n_warm: u64 = args
+        .opt_value_from_str("-w")
+        .expect("-w should be an integer")
+        .unwrap_or(50_000_000);
+    let n_instr: u64 = args
+        .opt_value_from_str("-i")
+        .expect("-i should be an integer")
+        .unwrap_or(100_000_000);
+    let heartbeat_int: u64 = args
+        .opt_value_from_str("-h")
+        .expect("-h should be an integer")
+        .unwrap_or(0);
 
-    let config_str: String = if let Some(config_str) = args.opt_value_from_str("--config").unwrap() {
+    let config_str: String = if let Some(config_str) = args.opt_value_from_str("--config").unwrap()
+    {
         config_str
     } else {
-        let config_path: String = args.opt_value_from_str("-p").unwrap().expect("Must provide a config with --config <json> or -p <path>");
+        let config_path: String = args
+            .opt_value_from_str("-p")
+            .unwrap()
+            .expect("Must provide a config with --config <json> or -p <path>");
         fs::read_to_string(config_path).expect("Could not find config file")
     };
     let config: Config = serde_json::from_str(&config_str).unwrap();
     let mut caches = config.to_caches();
     let mut cpu = Cpu::new();
 
-    let stats_path: String = args.opt_value_from_str("--json").unwrap().expect("Must provide output path with --json");
+    let stats_path: String = args
+        .opt_value_from_str("--json")
+        .unwrap()
+        .expect("Must provide output path with --json");
     let mut next_heartbeat = heartbeat_int;
 
-    let trace_path: String = args.opt_value_from_str("-t").unwrap().expect("Must provide a trace with -t");
-    let inst_per_block: usize = args.opt_value_from_str("--buffer-size").expect("--buffer-size must be an integer").unwrap_or(1024*16);
-    let blocks_per_queue: usize = args.opt_value_from_str("--queue-size").expect("--queue-size must be an integer").unwrap_or(32);
+    let trace_path: String = args
+        .opt_value_from_str("-t")
+        .unwrap()
+        .expect("Must provide a trace with -t");
+    let inst_per_block: usize = args
+        .opt_value_from_str("--buffer-size")
+        .expect("--buffer-size must be an integer")
+        .unwrap_or(1024 * 16);
+    let blocks_per_queue: usize = args
+        .opt_value_from_str("--queue-size")
+        .expect("--queue-size must be an integer")
+        .unwrap_or(32);
 
     let trace = Trace::read(trace_path.into(), inst_per_block, blocks_per_queue).unwrap();
 
@@ -60,7 +85,7 @@ fn main() {
                 warmup = false;
                 println!("Finished Warmup!")
             } else {
-                break
+                break;
             }
         }
     }

@@ -3,7 +3,7 @@ use crate::{
     cpu::Cpu,
 };
 
-use super::{AccessResult, Replace, MakeS};
+use super::{AccessResult, MakeS, Replace};
 
 pub struct Nmru {
     rng: fastrand::Rng,

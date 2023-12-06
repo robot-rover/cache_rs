@@ -7,7 +7,7 @@ use serde::Serialize;
 
 use crate::{
     cpu::Cpu,
-    replace::{AccessResult, Replace, MakeS},
+    replace::{AccessResult, MakeS, Replace},
 };
 
 #[derive(Debug)]
@@ -138,17 +138,33 @@ impl<S: MakeS, B: Default, R: Replace<S, B>> IsCache for Cache<S, B, R> {
         self.misses = 0;
         self.hits = 0;
         for block in &mut self.blocks {
-            block.live_dur = 0;
-            block.dead_dur = 0;
-            block.alloc_count = if block.alloc_count > 0 { 1 } else { 0 };
-            block.access_count = 0;
+            block.block_stats.live_dur = 0;
+            block.block_stats.dead_dur = 0;
+            block.block_stats.alloc_count = if block.block_stats.alloc_count > 0 {
+                1
+            } else {
+                0
+            };
+            block.block_stats.access_count = 0;
         }
     }
 
     fn make_stats(&self, cpu: &Cpu) -> CacheStats {
-        let total_alloc: f64 = self.blocks.iter().map(|b| b.alloc_count as f64).sum();
-        let total_dead: f64 = self.blocks.iter().map(|b| b.dead_dur as f64).sum();
-        let total_live: f64 = self.blocks.iter().map(|b| b.live_dur as f64).sum();
+        let total_alloc: f64 = self
+            .blocks
+            .iter()
+            .map(|b| b.block_stats.alloc_count as f64)
+            .sum();
+        let total_dead: f64 = self
+            .blocks
+            .iter()
+            .map(|b| b.block_stats.dead_dur as f64)
+            .sum();
+        let total_live: f64 = self
+            .blocks
+            .iter()
+            .map(|b| b.block_stats.live_dur as f64)
+            .sum();
         let total_both: f64 = total_dead + total_live;
 
         let total_access = (self.misses + self.hits) as f64;
@@ -159,14 +175,18 @@ impl<S: MakeS, B: Default, R: Replace<S, B>> IsCache for Cache<S, B, R> {
         let lifetime = total_both / total_alloc;
         let efficiency = total_live / total_both;
 
-        let efficiency_im = self.blocks.iter().map(|b| {
-            let total = b.live_dur + b.dead_dur;
-            if total == 0 {
-                0f64
-            } else {
-                b.live_dur as f64 / total as f64
-            }
-        }).collect();
+        let efficiency_im = self
+            .blocks
+            .iter()
+            .map(|b| {
+                let total = b.block_stats.live_dur + b.block_stats.dead_dur;
+                if total == 0 {
+                    0f64
+                } else {
+                    b.block_stats.live_dur as f64 / total as f64
+                }
+            })
+            .collect();
 
         CacheStats {
             name: self.name.clone(),
@@ -182,20 +202,24 @@ impl<S: MakeS, B: Default, R: Replace<S, B>> IsCache for Cache<S, B, R> {
     }
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct BlockStats {
+    live_dur: u64,
+    dead_dur: u64,
+    alloc_count: u64,
+    access_count: u64,
+}
+
 #[derive(Debug, Default)]
 pub struct Block<B: Default> {
     pub valid: bool,
     pub tag: usize,
 
-    // Stats
-    live_dur: u64,
-    dead_dur: u64,
-    alloc_count: u64,
-    access_count: u64,
+    pub block_stats: BlockStats,
 
     // In Flight Stats
-    alloc_time: u64,
-    access_time: u64,
+    pub alloc_time: u64,
+    pub access_time: u64,
 
     // Replace Data
     pub repl_block: B,
@@ -210,16 +234,16 @@ impl<B: Default> Block<B> {
     pub fn alloc(&mut self, cpu: &Cpu) {
         self.alloc_time = cpu.instr_idx;
         self.access_time = cpu.instr_idx;
-        self.alloc_count += 1;
+        self.block_stats.alloc_count += 1;
     }
 
     pub fn read(&mut self, cpu: &Cpu) {
         self.access_time = cpu.instr_idx;
-        self.access_count += 1;
+        self.block_stats.access_count += 1;
     }
 
     pub fn evict(&mut self, cpu: &Cpu) {
-        self.live_dur += self.access_time - self.alloc_time;
-        self.dead_dur += cpu.instr_idx - self.access_time;
+        self.block_stats.live_dur += self.access_time - self.alloc_time;
+        self.block_stats.dead_dur += cpu.instr_idx - self.access_time;
     }
 }

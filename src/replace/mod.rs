@@ -1,6 +1,6 @@
-pub mod nmru;
 pub mod lru;
 pub mod lrudb;
+pub mod nmru;
 
 use crate::{
     cache::{Addr, Cache},

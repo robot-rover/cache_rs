@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use crate::{
     cache::{Cache, IsCache},
-    replace::{nmru::Nmru, lru::Lru, lrudb::Lrudb},
+    replace::{lru::Lru, lrudb::Lrudb, nmru::Nmru},
 };
 
 #[derive(Deserialize)]
@@ -22,8 +22,7 @@ pub struct Config {
 impl Config {
     pub fn to_caches(self) -> Vec<Box<dyn IsCache>> {
         let block_size = self.block_size;
-        self
-            .caches
+        self.caches
             .into_iter()
             .map(|cc| match cc.repl.as_str() {
                 "nmru" => Box::new(Cache::new(

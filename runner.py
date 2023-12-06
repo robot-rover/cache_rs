@@ -11,6 +11,7 @@ from multiprocessing import cpu_count, pool
 WARM_INSTR = 100000000
 SIM_INSTR =  250000000
 N_JOBS = 6
+RELEASE = True
 
 TRACE_URL_ROOT = 'https://dpc3.compas.cs.stonybrook.edu/champsim-traces/speccpu/'
 
@@ -81,12 +82,16 @@ class Job:
     def run(self):
         os.makedirs(self.extra_dir(), exist_ok=True)
         tqdm.write(f'Running  Job {self.total_id()}')
-        args = ['cargo', 'run', '--release', '--', '-w', str(WARM_INSTR), '-i', str(SIM_INSTR), '--json', self.result_path(), '-t', self.trace[1], '--config', json.dumps(self.config)]
+        cargo_args = ['cargo', 'run']
+        if RELEASE:
+            cargo_args.append("--release")
+        args = cargo_args + ['--', '-w', str(WARM_INSTR), '-i', str(SIM_INSTR), '--json', self.result_path(), '-t', self.trace[1], '--config', json.dumps(self.config)]
         tqdm.write(' '.join(args))
         with open(self.extra_dir() + '/stdout.txt', 'wt') as stdout:
-            subprocess.run(args, stdout=stdout, stderr=stdout)
+            result = subprocess.run(args, stdout=stdout, stderr=stdout)
         tqdm.write(f'Finished Job {self.total_id()}')
         self.ran = True
+        return result.returncode
 
     def get_results(self):
         if self.result is None:
