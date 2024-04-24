@@ -10,7 +10,7 @@ from multiprocessing import cpu_count, pool
 
 WARM_INSTR = 100000000
 SIM_INSTR =  250000000
-N_JOBS = 6
+N_JOBS = 4
 RELEASE = True
 
 TRACE_URL_ROOT = 'https://dpc3.compas.cs.stonybrook.edu/champsim-traces/speccpu/'
